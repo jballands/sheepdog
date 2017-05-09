@@ -1,0 +1,17 @@
+{
+    "name": "@jballands/sheepdog",
+    "version": "1.0.0",
+    "description": "Herd your monorepo dependencies",
+    "author": "Jon Ballands <jballands@gmail.com>",
+    "license": "MIT",
+    "main": "index.js",
+    "bugs": {
+        "url": "https://github.com/jballands/sheepdog/issues"
+    },
+    "dependencies": {
+        "colors": "^1.1.2",
+        "find": "^0.2.7",
+        "semver-set": "^0.1.1",
+        "yargs": "^8.0.1"
+    }
+}
