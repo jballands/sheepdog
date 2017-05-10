@@ -11,7 +11,7 @@
 const process = require('process');
 const colors = require('colors');
 const utils = require('./utils');
-const marshaler = require('./marshal');
+const marshal = require('./marshal');
 
 const argv = require('yargs')
     .alias('b', 'bark')
@@ -29,49 +29,33 @@ console.info = argv.quiet ? function() {} : console.info;
 
 console.info('Looking for package.json files...'.cyan);
 
-utils.findFiles(/package.json/, dir)
-    .then(files => {
-        files = files.filter(file => {
-            return file.indexOf('node_modules') < 0;
+utils.findFilePaths(/package.json/, dir)
+    .then(paths => {
+        paths = paths.filter(path => {
+            return path.indexOf('node_modules') < 0;
         });
 
         // No files?
-        if (files.length <= 0) {
+        if (paths.length <= 0) {
             return console.error('Couldn\'t find any package.json files'.red);
         }
-        console.info(`Found ${files.length} file(s)`.green);
+        console.info(`Found ${paths.length} file(s)`.green);
         console.info(`Generating dependency tree...`.cyan);
-        return getDependencyTree(files);
+        return getDependencyTree(paths);
     })
     .then(tree => {
-        console.info(`Done`.green);
+        console.info(`Done 🐶`.green);
         if (argv.marshal) {
-            return marshaler(tree);
+            return marshal(tree);
         }
 
         console.info(`Checking for dependency intersections...`.cyan);
 
         // Scan tree for issues
         const issues = [];
-        const modules = Object.keys(tree);
-        for (let m of modules) {
-            const semvers = Object.keys(tree[m]);
-
-            // Skip this module if there is only one semver
-            if (semvers.length <= 1) {
-                continue;
-            }
-
-            // If the semvers don't resolve, log it
-            if(utils.doSemversResolve(semvers) === null) {
-                let builder = `- ${m.bold} has incompatible semver ranges:`.yellow;
-                for (let s of semvers) {
-                    const affected = tree[m][s].map(a => a.name);
-                    builder = builder.concat(`\n${s} => ${affected.join(', ')}`.cyan);
-                }
-                issues.push(builder);
-            }
-        }
+        utils.tdoSemversResolve(tree, (name, subtree) => {
+            issues.push(utils.printSemverInconsistencies(name, subtree));
+        });
 
         if (issues.length > 0) {
             console.info(issues.join('\n\n'));
@@ -90,28 +74,27 @@ utils.findFiles(/package.json/, dir)
 
 // -----------------------------------------------------------------------------
 
-function getDependencyTree(files) {
+function getDependencyTree(paths) {
     return new Promise((resolve, reject) => {
-        utils.openFiles(files)
-            .then(contents => resolve(contentsToDependencyTree(contents)))
+        utils.readFiles(paths)
+            .then(files => resolve(contentsToDependencyTree(files)))
             .catch(err => reject(err));
     });
 }
 
-function contentsToDependencyTree(contents, path) {
-    let trees = contents.map(content => {
-        const data = JSON.parse(content.data);
-        if (data.name === undefined) {
+function contentsToDependencyTree(files) {
+    let trees = files.map(file => {
+        if (file.data.name === undefined) {
             console.error('One of your package.json files doesn\'t have a name field. Skipping this file:'.red);
-            console.error(contents.path.red);
+            console.error(file.path.red);
             return null;
         }
 
-        const dependenciesTree = utils.createDependencyTree(data.name, content.path, data.dependencies);
-        const devDependenciesTree = utils.createDependencyTree(data.name, content.path, data.devDependencies);
-        const testDependenciesTree = utils.createDependencyTree(data.name, content.path, data.testDependencies);
+        const dependenciesTree = utils.createDependencyTree(file.data.name, 'dependencies', file);
+        const devDependenciesTree = utils.createDependencyTree(file.data.name, 'devDependencies', file);
+        const testDependenciesTree = utils.createDependencyTree(file.data.name, 'testDependencies', file);
 
-        const cleanedDeps = [dependenciesTree, devDependenciesTree, testDependenciesTree].filter(d => d !== null);
+        const cleanedDeps = [dependenciesTree, devDependenciesTree, testDependenciesTree].filter(tree => tree !== null);
         return utils.reduceDependencyTrees(cleanedDeps);
     });
 

@@ -10,55 +10,78 @@
 const fs = require('fs');
 const find = require('find');
 const intersect = require('semver-set').intersect;
+const structs = require('./structs');
+
+const File = structs.File;
+const Node = structs.Node;
 
 // -----------------------------------------------------------------------------
 
-//  Find all files given the `filename` pattern in specified `directory`. Returns
+//  Find all files given the `filePattern` pattern in specified `directory`. Returns
 //  a promise that resolves to file paths that match the input.
-function findFiles(filename, directory) {
+function findFilePaths(filePattern, directory) {
     return new Promise(resolve => {
-        find.file(filename, directory, files => {
-            resolve(files);
+        find.file(filePattern, directory, paths => {
+            resolve(paths);
         });
     });
 }
 
-//  Open all file paths specified in the `files` array. Returns a promise that resolves
-//  to file contents.
-function openFiles(files) {
+// -----------------------------------------------------------------------------
+
+//  Given a file `path`, resolves to a File.
+function readFile(path) {
     return new Promise((resolve, reject) => {
-        Promise.all(files.map(file => {
-            return new Promise((resolve, reject) => {
-                fs.readFile(file, 'utf8', (err, data) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    return resolve({ path: file, data: data });
-                });
-            });
-        })).then(contents => {
-            resolve(contents);
-        })
+        fs.readFile(path, 'utf8', (err, data) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(new File(path, data));
+        });
+    });
+}
+
+//  Given file `paths`, resolves to an array of Files.
+function readFiles(paths) {
+    return new Promise((resolve, reject) => {
+        Promise.all(paths.map(path => readFile(path)))
+        .then(files => resolve(files))
         .catch(err => reject(err));
+    });
+}
+
+//  Write to the `file` with `contents`. Returns a promise that resolves to the
+//  new File.
+function writeFile(file, contents) {
+    return new Promsise((resolve, reject) => {
+        fs.writeFile(file.name, contents, 'utf8', (err, data) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(new File(file.name, contents));
+        });
     });
 }
 
 // -----------------------------------------------------------------------------
 
-//  Creates a dependency tree from a package name `n`, a package path `p`, and dependencies
-//  from package.json `d`.
-function createDependencyTree(n, p, d) {
-    if (d === undefined) {
+//  Creates a new dependency tree given a module `name`, the `type` to look under
+//  for dependencies, and the `file` the all originates from.
+function createDependencyTree(name, type, file) {
+    const tree = {};
+    const typeTree = file.data[type];
+
+    // If there's no type tree, abort
+    if (!typeTree) {
         return null;
     }
 
-    const tree = {};
-    const modules = Object.keys(d);
+    const modules = Object.keys(file.data[type]);
 
     for (let m of modules) {
         const rdep = {};
-        const range = d[m];
-        rdep[range] = [{ name: n, path: p }];
+        const range = typeTree[m];
+        rdep[range] = [new Node(name, type, file)];
         tree[m] = rdep;
     }
 
@@ -82,17 +105,17 @@ function reduceDependencyTrees(trees) {
             }
 
             // Otherwise it did exist and we need to do some more massaging
-            const rSemvers = reduced[m];
-            const semvers = Object.keys(tree[m]);
-            for (let semver of semvers) {
+            const rSubtrees = reduced[m];
+            const subtrees = Object.keys(tree[m]);
+            for (let subtree of subtrees) {
                 // If the semver doesn't exist yet, just add it
-                if (!rSemvers[semver]) {
-                    rSemvers[semver] = tree[m][semver];
+                if (!rSubtrees[subtree]) {
+                    rSubtrees[subtree] = tree[m][subtree];
                     continue;
                 }
 
                 // Otherwise, just push it to the existing semver
-                rSemvers[semver] = rSemvers[semver].concat(tree[m][semver]);
+                rSubtrees[subtree] = rSubtrees[subtree].concat(tree[m][subtree]);
             }
         }
     }
@@ -111,12 +134,47 @@ function doSemversResolve(semvers) {
     return intersect.apply(this, semvers);
 }
 
+//  Invoke the callback `cb` if any dependency on `tree` won't resolve with
+//  another version of itself.
+function tdoSemversResolve(tree, cb) {
+    const modules = Object.keys(tree);
+
+    for (let m of modules) {
+        const semvers = Object.keys(tree[m]);
+
+        // Skip this module if there is only one semver
+        if (semvers.length <= 1) {
+            continue;
+        }
+
+        // If the semvers don't resolve, invoke the callback
+        if (doSemversResolve(semvers) === null) {
+            cb(m, tree[m]);
+        }
+    }
+}
+
+function printSemverInconsistencies(name, subtree) {
+    let builder = `${name.bold} has incompatible semver ranges:`.yellow;
+
+    for (let range of Object.keys(subtree)) {
+        const affected = subtree[range].map(a => `\u0020\u0020- ${a.name} (${a.type})`);
+        builder = builder.concat(`\n${range.bold} =>\n${affected.join('\n')}`.cyan);
+    }
+
+    return builder;
+}
+
 // -----------------------------------------------------------------------------
 
 module.exports = {
-    findFiles,
-    openFiles,
+    findFilePaths,
+    readFile,
+    readFiles,
+    writeFile,
     createDependencyTree,
     reduceDependencyTrees,
-    doSemversResolve
+    doSemversResolve,
+    tdoSemversResolve,
+    printSemverInconsistencies
 };
