@@ -140,10 +140,15 @@ function doSemversResolve(semvers) {
 
 //  Invoke the callback `cb` if any dependency on `tree` won't resolve with
 //  another version of itself.
-function tdoSemversResolve(tree, cb) {
+function tdoSemversResolve(tree, ignore, cb) {
     const modules = Object.keys(tree);
 
     for (let m of modules) {
+        // If the module equals something in the ignore list, move on
+        if (ignore !== null && ignore.indexOf(m) > -1) {
+            continue;
+        }
+
         const semvers = Object.keys(tree[m]);
 
         // Skip this module if there is only one semver

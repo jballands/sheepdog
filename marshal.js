@@ -20,11 +20,11 @@ const _ = {
 
 // -----------------------------------------------------------------------------
 
-module.exports = tree => {
+module.exports = (tree, argv) => {
     console.info('Starting marshal...'.cyan);
     const writePromises = [];
 
-    utils.tdoSemversResolve(tree, (name, subtree) => {
+    utils.tdoSemversResolve(tree, argv.ignore, (name, subtree) => {
         console.warn(utils.printSemverInconsistencies(name, subtree));
 
         // Get a valid command

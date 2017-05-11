@@ -26,6 +26,7 @@ const argv = require('yargs')
 
 const dir = argv.dir ? argv.dir : '.';
 console.info = argv.quiet ? function() {} : console.info;
+argv.ignore = typeof(argv.ignore) === 'string' ? argv.ignore.split(',') : null;
 
 console.info('Looking for package.json files...'.cyan);
 
@@ -46,22 +47,22 @@ utils.findFilePaths(/package.json/, dir)
     .then(tree => {
         console.info(`Done 🐶`.green);
         if (argv.marshal) {
-            return marshal(tree);
+            return marshal(tree, argv);
         }
 
         console.info(`Checking for dependency intersections...`.cyan);
 
         // Scan tree for issues
         const issues = [];
-        utils.tdoSemversResolve(tree, (name, subtree) => {
+        utils.tdoSemversResolve(tree, argv.ignore, (name, subtree) => {
             issues.push(utils.printSemverInconsistencies(name, subtree));
         });
 
         if (issues.length > 0) {
-            console.info(issues.join('\n\n'));
+            console.warn(issues.join('\n\n'));
         }
         else {
-            console.info('No semver range issues to report'.green);
+            console.log('No semver range issues to report'.green);
         }
 
         // Exit with an error
