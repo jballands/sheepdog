@@ -145,7 +145,7 @@ function tdoSemversResolve(tree, ignore, cb) {
 
     for (let m of modules) {
         // If the module equals something in the ignore list, move on
-        if (ignore !== null && ignore.indexOf(m) > -1) {
+        if (ignore.length > 0 && ignore.indexOf(m) > -1) {
             continue;
         }
 

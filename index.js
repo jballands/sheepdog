@@ -26,7 +26,8 @@ const argv = require('yargs')
 
 const dir = argv.dir ? argv.dir : '.';
 console.info = argv.quiet ? function() {} : console.info;
-argv.ignore = typeof(argv.ignore) === 'string' ? argv.ignore.split(',') : null;
+argv.ignore = typeof(argv.ignore) === 'string' ? argv.ignore.split(',') : [];
+argv.only = typeof(argv.only) === 'string' ? argv.only.split(',') : [];
 
 console.info('Looking for package.json files...'.cyan);
 
@@ -92,12 +93,10 @@ function contentsToDependencyTree(files) {
             console.error(`${file.path} doesn't have a name field. I'll call it ${name.bold} instead`.red);
         }
 
-        const dependenciesTree = utils.createDependencyTree(name, 'dependencies', file);
-        const devDependenciesTree = utils.createDependencyTree(name, 'devDependencies', file);
-        const testDependenciesTree = utils.createDependencyTree(name, 'testDependencies', file);
-        const peerDependenciesTree = utils.createDependencyTree(name, 'peerDependencies', file);
+        let validTrees = argv.only.length > 0 ? argv.only : ['dependencies', 'devDependencies', 'testDependencies', 'peerDependencies'];
+        const dt = validTrees.map(t => utils.createDependencyTree(name, t, file));
 
-        return utils.reduceDependencyTrees([dependenciesTree, devDependenciesTree, testDependenciesTree]);
+        return utils.reduceDependencyTrees(dt);
     });
 
     return utils.reduceDependencyTrees(trees);
