@@ -70,6 +70,12 @@ function writeFile(file, contents) {
 //  for dependencies, and the `file` the all originates from.
 function createDependencyTree(name, type, file) {
     const tree = {};
+
+    // No file?
+    if (!file) {
+        return null;
+    }
+
     const typeTree = file.data[type];
 
     // If there's no type tree, abort
@@ -94,6 +100,7 @@ function createDependencyTree(name, type, file) {
 //  then reduce them with this routine.
 function reduceDependencyTrees(trees) {
     const reduced = {};
+    trees = !trees ? [] : trees;
 
     // Filter out null trees
     trees = trees.filter(tree => tree !== null);
@@ -130,12 +137,15 @@ function reduceDependencyTrees(trees) {
 // -----------------------------------------------------------------------------
 
 //  Figure out if an array of `semvers` conflict. True if they do, false if not.
-function doSemversResolve(semvers) {
+function doSemverRangesResolve(ranges) {
     // Sanity check
-    if (semvers.length <= 0) {
+    if (!ranges) {
+        return false;
+    }
+    if (ranges.length <= 0) {
         return true;
     }
-    return intersect.apply(this, semvers);
+    return intersect.apply(this, ranges);
 }
 
 //  Invoke the callback `cb` if any dependency on `tree` won't resolve with
@@ -149,15 +159,15 @@ function tdoSemversResolve(tree, ignore, cb) {
             continue;
         }
 
-        const semvers = Object.keys(tree[m]);
+        const ranges = Object.keys(tree[m]);
 
-        // Skip this module if there is only one semver
-        if (semvers.length <= 1) {
+        // Skip this module if there is only one range
+        if (ranges.length <= 1) {
             continue;
         }
 
-        // If the semvers don't resolve, invoke the callback
-        if (doSemversResolve(semvers) === null) {
+        // If the ranges don't resolve, invoke the callback
+        if (doSemverRangesResolve(ranges) === null) {
             cb(m, tree[m]);
         }
     }

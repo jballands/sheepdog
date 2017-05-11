@@ -8,6 +8,9 @@
     "bugs": {
         "url": "https://github.com/jballands/sheepdog/issues"
     },
+    "scripts": {
+        "test": "jasmine-node spec/"
+    },
     "dependencies": {
         "colors": "^1.1.2",
         "find": "^0.2.7",
@@ -17,5 +20,9 @@
         "semver": "^5.3.0",
         "semver-set": "^0.1.1",
         "yargs": "^8.0.1"
+    },
+    "devDependencies": {
+        "jasmine": "^2.6.0",
+        "jasmine-node": "^1.14.5"
     }
 }
