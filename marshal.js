@@ -14,6 +14,7 @@ const semver = require('semver');
 const utils = require('./utils');
 
 const _ = {
+    assign: require('lodash.assign'),
     flatten: require('lodash.flatten')
 };
 
@@ -40,7 +41,8 @@ module.exports = tree => {
         // Semver
         else if (semver.validRange(command)) {
             console.info(`Updating ${name.bold} to ${command.bold} in affected packages`.green);
-            // writeNewRangeToFiles(subtree, name, command);
+            writeNewRangeToFiles(subtree, name, command)
+                .then();
         }
         // On skip, do nothing...
 
@@ -51,16 +53,20 @@ module.exports = tree => {
 // -----------------------------------------------------------------------------
 
 function writeNewRangeToFiles(subtree, name, range) {
-    // const ranges = Object.keys(subtree);
-    // const vinyls = _.flatten(ranges.map(r => subtree[r]));
-    //
-    // Promise.all(vinyls.map(vinyl => {
-    //     const path = subtree[range].path;
-    //     const type = subtree[range].type;
-    //
-    //     // Update this file
-    //     return utils.writeFile();
-    // }));
+    return new Promise((resolve, reject) => {
+        const ranges = Object.keys(subtree);
+        const nodes = _.flatten(ranges.map(r => subtree[r]));
+
+        Promise.all(nodes.map(node => {
+            const newData = _.assign({}, node.file.data);
+            newData[name] = range;
+
+            // Update this file
+            return utils.writeFile(node.file.path, newData);
+        }))
+        .then(() => resolve())
+        .catch(err => reject(err));
+    });
 }
 
 function isValidCommand(command) {
