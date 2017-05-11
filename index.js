@@ -83,19 +83,20 @@ function getDependencyTree(paths) {
 }
 
 function contentsToDependencyTree(files) {
+    const dogGenerator = utils.getDogBreed();
+
     let trees = files.map(file => {
+        const name = file.data.name !== undefined ? file.data.name : dogGenerator.next().value.toString();
         if (file.data.name === undefined) {
-            console.error('One of your package.json files doesn\'t have a name field. Skipping this file:'.red);
-            console.error(file.path.red);
-            return null;
+            console.error(`${file.path} doesn't have a name field. I'll call it ${name.bold} instead`.red);
         }
 
-        const dependenciesTree = utils.createDependencyTree(file.data.name, 'dependencies', file);
-        const devDependenciesTree = utils.createDependencyTree(file.data.name, 'devDependencies', file);
-        const testDependenciesTree = utils.createDependencyTree(file.data.name, 'testDependencies', file);
+        const dependenciesTree = utils.createDependencyTree(name, 'dependencies', file);
+        const devDependenciesTree = utils.createDependencyTree(name, 'devDependencies', file);
+        const testDependenciesTree = utils.createDependencyTree(name, 'testDependencies', file);
+        const peerDependenciesTree = utils.createDependencyTree(name, 'peerDependencies', file);
 
-        const cleanedDeps = [dependenciesTree, devDependenciesTree, testDependenciesTree].filter(tree => tree !== null);
-        return utils.reduceDependencyTrees(cleanedDeps);
+        return utils.reduceDependencyTrees([dependenciesTree, devDependenciesTree, testDependenciesTree]);
     });
 
     return utils.reduceDependencyTrees(trees);

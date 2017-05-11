@@ -10,7 +10,7 @@
 //  Helper struct that represents a file on the file system.
 function File(path, data) {
     this.path = path;
-    this.data = JSON.parse(data);
+    this.data = typeof(data) === 'object' ? data : JSON.parse(data);
 }
 
 //   Helper struct that represents a node in the dependency tree.

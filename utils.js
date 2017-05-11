@@ -53,12 +53,13 @@ function readFiles(paths) {
 //  Write to the `file` with `contents`. Returns a promise that resolves to the
 //  new File.
 function writeFile(file, contents) {
-    return new Promsise((resolve, reject) => {
-        fs.writeFile(file.name, contents, 'utf8', (err, data) => {
+    return new Promise((resolve, reject) => {
+        const pretty = JSON.stringify(contents, null, 2);
+        fs.writeFile(file.path, pretty, 'utf8', (err, data) => {
             if (err) {
                 return reject(err);
             }
-            return resolve(new File(file.name, contents));
+            return resolve(new File(file.path, contents));
         });
     });
 }
@@ -93,6 +94,9 @@ function createDependencyTree(name, type, file) {
 //  then reduce them with this routine.
 function reduceDependencyTrees(trees) {
     const reduced = {};
+
+    // Filter out null trees
+    trees = trees.filter(tree => tree !== null);
 
     for (let tree of trees) {
         const modules = Object.keys(tree);
@@ -167,6 +171,17 @@ function printSemverInconsistencies(name, subtree) {
 
 // -----------------------------------------------------------------------------
 
+const dogs = require('./dogs');
+
+function* getDogBreed() {
+    while (dogs.length > 0) {
+        const selected = dogs.splice(Math.floor(Math.random() * dogs.length - 1), 1);
+        yield selected;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 module.exports = {
     findFilePaths,
     readFile,
@@ -176,5 +191,6 @@ module.exports = {
     reduceDependencyTrees,
     doSemversResolve,
     tdoSemversResolve,
-    printSemverInconsistencies
+    printSemverInconsistencies,
+    getDogBreed
 };
