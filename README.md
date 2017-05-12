@@ -3,9 +3,27 @@
 Herd NPM packages in your monorepo. :dog:
 
 This devtool ensures that common dependencies in a monorepo
-depend on the same version to allow for hoisting with tools
+"resolve" to the same version to allow for hoisting with tools
 like [Lerna](https://lernajs.io/). This makes for more
 predictable development and a smaller bundle footprint.
+
+## How's It Work?
+
+First, Sheepdog looks at `package.json` files and forms a dependency tree. This
+dependency tree represents all the dependencies an entire monorepo needs.
+
+Next, Sheepdog examines the tree and tries to see if dependency ranges across
+the monorepo "resolve" to the same version. At a high-level, that routine looks
+like this:
+
+1. Dependency version ranges can be thought of as mathematical intervals.
+2. If all version ranges end on the same version with the same exclusivity,
+the dependencies will resolve. For example, these version ranges will resolve
+because they both end in `3.0.0` exclusive:
+    ```
+    ^2.0.0 => [2.0.0, 3.0.0)
+    ^2.1.5 => [2.1.5, 3.0.0)
+    ```
 
 ## Installation
 
