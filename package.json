@@ -5,6 +5,9 @@
     "author": "Jon Ballands <jballands@gmail.com>",
     "license": "MIT",
     "main": "index.js",
+    "bin": {
+        "sheepdog": "index.js"
+    },
     "bugs": {
         "url": "https://github.com/jballands/sheepdog/issues"
     },
