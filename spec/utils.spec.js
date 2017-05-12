@@ -274,27 +274,35 @@ describe('reduceDependencyTrees', () => {
     describe('doSemversResolve', () => {
 
         it('should return false if there no arguments', () => {
-            expect(utils.doSemversResolve()).toBe(false);
+            expect(utils.doSemverRangesResolve()).toBe(false);
         });
 
         it('should return true if there no semvers (empty array)', () => {
-            expect(utils.doSemversResolve([])).toBe(true);
+            expect(utils.doSemverRangesResolve([])).toBe(true);
         });
 
-        it('should return truthy if semvers resolve each other (simple)', () => {
-            expect(utils.doSemversResolve(['^2.0.0', '^2.3.0'])).toBe('^2.3.0');
+        it('should return true if semvers resolve each other (simple)', () => {
+            expect(utils.doSemverRangesResolve(['^2.0.0', '^2.3.0'])).toBe(true);
         });
 
-        it('should return truthy if semvers resolve each other (complex)', () => {
-            expect(utils.doSemversResolve(['^2.0.0', '^2.3.0', '^2.5.2', '^2.7.4'])).toBe('^2.7.4');
+        it('should return true if semvers resolve each other (complex)', () => {
+            expect(utils.doSemverRangesResolve(['^2.0.0', '^2.3.0', '^2.5.2', '^2.7.4'])).toBe(true);
         });
 
-        it('should return null if semvers don\'t resolve each other (simple)', () => {
-            expect(utils.doSemversResolve(['^2.1.0', '~2.0.0'])).toBe(null);
+        it('should return false if semvers don\'t resolve each other (simple)', () => {
+            expect(utils.doSemverRangesResolve(['^2.1.0', '~2.0.0'])).toBe(false);
         });
 
-        it('should return null if semvers don\'t resolve each other (complex)', () => {
-            expect(utils.doSemversResolve(['^2.1.0', '~2.0.0', '^2.2.0', '~2.0.1'])).toBe(null);
+        it('should return false if semvers don\'t resolve each other (complex)', () => {
+            expect(utils.doSemverRangesResolve(['^2.1.0', '~2.0.0', '^2.2.0', '~2.0.1'])).toBe(false);
+        });
+
+        it('should return false if semvers don\'t resolve each other (point)', () => {
+            expect(utils.doSemverRangesResolve(['~2.1.0', '2.2.0'])).toBe(false);
+        });
+
+        it('should return false if semvers don\'t resolve each other (special)', () => {
+            expect(utils.doSemverRangesResolve(['^2.1.0', '*'])).toBe(false);
         });
     });
 

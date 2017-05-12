@@ -9,7 +9,7 @@
 
 const fs = require('fs');
 const find = require('find');
-const intersect = require('semver-set').intersect;
+const semver = require('semver');
 const structs = require('./structs');
 
 const File = structs.File;
@@ -145,12 +145,31 @@ function doSemverRangesResolve(ranges) {
     if (ranges.length <= 0) {
         return true;
     }
-    return intersect.apply(this, ranges);
+
+    // Create a bunch of ranges
+    const rRanges = ranges.map(r => semver.Range(r));
+
+    // Get the biggest possible version for all comparators
+    const comparatorsSet = rRanges.map(r => r.set[0]);
+    const biggestComparators = comparatorsSet.map(set => {
+        return set.reduce((acc, curr) => {
+            return semver.gt(acc.semver.version, curr.semver.version) ? acc : curr;
+        });
+    }).map(c => c.value);
+
+    // If they are all the same, we are good to go!
+    for (let i = 1 ; i < biggestComparators.length ; i++) {
+        if (biggestComparators[i] !== biggestComparators[0]) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 //  Invoke the callback `cb` if any dependency on `tree` won't resolve with
 //  another version of itself.
-function tdoSemversResolve(tree, ignore, cb) {
+function tdoSemverRangesResolve(tree, ignore, cb) {
     const modules = Object.keys(tree);
 
     for (let m of modules) {
@@ -167,7 +186,7 @@ function tdoSemversResolve(tree, ignore, cb) {
         }
 
         // If the ranges don't resolve, invoke the callback
-        if (doSemverRangesResolve(ranges) === null) {
+        if (doSemverRangesResolve(ranges) === false) {
             cb(m, tree[m]);
         }
     }
@@ -204,8 +223,8 @@ module.exports = {
     writeFile,
     createDependencyTree,
     reduceDependencyTrees,
-    doSemversResolve,
-    tdoSemversResolve,
+    doSemverRangesResolve,
+    tdoSemverRangesResolve,
     printSemverInconsistencies,
     getDogBreed
 };

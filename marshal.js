@@ -24,7 +24,7 @@ module.exports = (tree, argv) => {
     console.info('Starting marshal...'.cyan);
     const writePromises = [];
 
-    utils.tdoSemversResolve(tree, argv.ignore, (name, subtree) => {
+    utils.tdoSemverRangesResolve(tree, argv.ignore, (name, subtree) => {
         console.warn(utils.printSemverInconsistencies(name, subtree));
 
         // Get a valid command

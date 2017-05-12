@@ -55,7 +55,7 @@ utils.findFilePaths(/package.json/, dir)
 
         // Scan tree for issues
         const issues = [];
-        utils.tdoSemversResolve(tree, argv.ignore, (name, subtree) => {
+        utils.tdoSemverRangesResolve(tree, argv.ignore, (name, subtree) => {
             issues.push(utils.printSemverInconsistencies(name, subtree));
         });
 
