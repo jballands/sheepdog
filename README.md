@@ -1,6 +1,6 @@
-# sheepdog (wip)
+# sheepdog
 
-Herd NPM packages in your monorepo.
+Herd NPM packages in your monorepo. :dog:
 
 This devtool ensures that common dependencies in a monorepo
 depend on the same version to allow for hoisting with tools
