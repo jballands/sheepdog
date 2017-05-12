@@ -25,7 +25,7 @@ because they both end in `3.0.0` exclusive:
     ^2.1.5 => [2.1.5, 3.0.0)
     ```
 
-Finally, using this information, Sheepdog reports to which dependencies are inconsistent
+Finally, using this information, Sheepdog reports which dependencies are inconsistent
 in which packages in the monorepo.
 
 ## Installation
