@@ -31,7 +31,7 @@ in which packages in the monorepo.
 ## Installation
 
 ```
-$ yarn add global @jballands/sheepdog
+$ yarn add global sheepdog
 ```
 
 ## Usage

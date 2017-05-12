@@ -1,5 +1,5 @@
 {
-    "name": "@jballands/sheepdog",
+    "name": "sheepdog",
     "version": "1.0.0",
     "description": "Herd your monorepo dependencies",
     "author": "Jon Ballands <jballands@gmail.com>",
