@@ -46,7 +46,7 @@ utils.findFilePaths(/package.json/, dir)
         return getDependencyTree(paths);
     })
     .then(tree => {
-        console.info(`Done 🐶`.green);
+        console.info(`Done`.green);
         if (argv.marshal) {
             return marshal(tree, argv);
         }
