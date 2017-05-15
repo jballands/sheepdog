@@ -54,7 +54,10 @@ module.exports = (tree, argv) => {
         console.info('Fixing package.json files...'.cyan);
 
         Promise.all(writePromises.map(fun => new Promise(fun)))
-            .then(() => console.info('Success'.green))
+            .then(() => {
+                console.info('Success'.green)
+                console.info('Run <lerna bootstrap|yarn|npm i> again to consolidate dependencies'.cyan)
+            })
             .catch(err => console.error(err).red);
     }
     else {
