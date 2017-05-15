@@ -1,6 +1,6 @@
 {
   "name": "sheepdog",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Herd your monorepo dependencies",
   "author": "Jon Ballands <jballands@gmail.com>",
   "license": "MIT",
